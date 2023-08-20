@@ -17,7 +17,8 @@
     <title>TinyApp</title>
   </head>
   <body>
-    <main style="margin: 1em;">
+    <%-include('partials/_header') %>
+    <main style="margin: 1em">
       <h3>My URLs</h3>
       <table class="table">
         <thead>
@@ -27,11 +28,11 @@
           </tr>
         </thead>
         <tbody>
-          <% for (let id in urls) { %>
-            <tr>
-              <td><%= id %></td>
-              <td><%= urls[id] %></td>
-            </tr>
+          <%for (let id in urls) { %>
+          <tr>
+            <td><%= id %></td>
+            <td><%= urls[id] %></td>
+          </tr>
           <% } %>
         </tbody>
       </table>
