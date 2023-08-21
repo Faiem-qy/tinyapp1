@@ -15,11 +15,13 @@ app.set("view engine", "ejs");
 
 app.use(express.urlencoded({ extended: true }));
 
+// Define the initial database of shortened URLs
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
+// Route to redirect short URLs to their corresponding long URLs
 app.get("/u/:id", (req, res) => {
   // const longURL = ...
   const id = req.params.id;
@@ -32,11 +34,12 @@ app.get("/u/:id", (req, res) => {
 });
 
 
+// Route to render the form for creating new URLs
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-
+// Route to display a specific short URL's details
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id];
@@ -44,7 +47,7 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-
+// Route to display a list of all short URLs
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
@@ -87,10 +90,10 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  const idToDelete = req.params.id;
+  const idToDelete = req.params.id; // Get the ID to delete from the route parameter
   if (urlDatabase[idToDelete]) {
-    delete urlDatabase[idToDelete];
-    res.redirect("/urls");
+    delete urlDatabase[idToDelete]; // Remove the URL from the database
+    res.redirect("/urls");// Redirect back to the index page
   } else {
     res.status(404).send("Short URL not found");
   }
