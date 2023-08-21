@@ -20,6 +20,12 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+app.get("/u/:id", (req, res) => {
+  // const longURL = ...
+  res.redirect(longURL);
+});
+
+
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
@@ -65,6 +71,11 @@ app.listen(PORT, () => {
 
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
+  const id = generateRandomString();// generate random string
+  const longURL = req.body.longURL;//
+  console.log(id, longURL); // Log the POST request body to the console
+  urlDatabase[id] = longURL;
+  console.log(urlDatabase);
+
   res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
