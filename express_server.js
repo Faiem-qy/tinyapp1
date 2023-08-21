@@ -22,7 +22,13 @@ const urlDatabase = {
 
 app.get("/u/:id", (req, res) => {
   // const longURL = ...
-  res.redirect(longURL);
+  const id = req.params.id;
+  const longURL = urlDatabase[id]; //Retrieve the longURL using the id from urlDatabase
+  if (longURL) {
+    res.redirect(longURL); //Redirect to the longURL
+  } else {
+    res.status(404).send("Short URL not found");
+  }
 });
 
 
@@ -74,8 +80,18 @@ app.post("/urls", (req, res) => {
   const id = generateRandomString();// generate random string
   const longURL = req.body.longURL;//
   console.log(id, longURL); // Log the POST request body to the console
-  urlDatabase[id] = longURL;
+  urlDatabase[id] = longURL;// add random id to the new longUrl
   console.log(urlDatabase);
 
   res.send("Ok"); // Respond with 'Ok' (we will replace this)
+});
+
+app.post("/urls/:id/delete", (req, res) => {
+  const idToDelete = req.params.id;
+  if (urlDatabase[idToDelete]) {
+    delete urlDatabase[idToDelete];
+    res.redirect("/urls");
+  } else {
+    res.status(404).send("Short URL not found");
+  }
 });
