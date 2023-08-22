@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
+const cookieParser = require('cookie-parser');
 
 function generateRandomString() {
   const alphanumeric = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -99,13 +100,22 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 });
 
-// NEW UPDATING URLS - Make Edit Button Work - start
+// NEW UPDATING URLS - Make Edit Button Work
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id; // Get the ID
   const longURL = req.body.longURL;
 
   urlDatabase[id] = longURL;  //The id is assigned a new value. This id is now equal to this new req.body submitted by the user (old one is discarded)
-    res.redirect("/urls");
+  res.redirect("/urls");
 });
-// Make Edit button work - end
+
+
+
+//Cookie route
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+  res.cookie('username', username);
+  res.redirect("/urls");
+});
+
 
