@@ -99,3 +99,12 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 });
 
+// NEW UPDATING URLS - Make Edit Button Work - start
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id; // Get the ID
+  const longURL = req.body.longURL;
+
+  urlDatabase[id] = longURL;  //The id is assigned a new value. This id is now equal to this new req.body submitted by the user (old one is discarded)
+    res.redirect("/urls");
+});
+// Make Edit button work - end
