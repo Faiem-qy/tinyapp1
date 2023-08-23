@@ -122,6 +122,16 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+//6C . Add a GET route /login that renders the appropriate template
+app.get("/login", (req, res) => {
+  const user_id = req.cookies.user_id;
+  const templateVars = {
+    user_id, 
+    user: users[user_id]
+  };
+  res.render("login", templateVars); //renders login template and templateVars for _header.js to use
+});
+
 
 app.post("/urls", (req, res) => {
   const id = generateRandomString();// generate random string

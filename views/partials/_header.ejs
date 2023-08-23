@@ -22,6 +22,7 @@
     <!-- 2B. LOGOUT AND CLEAR COOKIES -->
     <!-- 4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie -->
     <!-- 4E. Update the _header partial to show the email property from the user object instead of the username. -->
+    <!-- 6B. Remove login form (after creating Login.ejs), and display a register link -->
     <% if(user_id) { %> 
       <div>
         <form class="form-inline justify-content-center" method="POST" action="/logout">
@@ -31,18 +32,15 @@
       
       </div>
       <% }else{ %>
-        <form class="form-inline" action="/login" method="POST">
+        <form class="form-inline" action="/login" method="GET">
           <div class="form-group mb-2">
-            <label for="user_id"></label>
-            <input
-              type="text"
-              class="form-control"
-              id="user_id"
-              name="user_id"
-              placeholder="Enter your username"
-            />
+            <button type="submit" class="btn btn-primary" >Log In</button>
           </div>
-          <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+        <form class="form-inline justify-content-right" action="/register" method="GET">
+          <div class="form-group mb-2">
+            <button type="submit" class="btn btn-primary" >Register</button>
+          </div>
         </form>
       <% } %>
   </nav>
