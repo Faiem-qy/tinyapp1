@@ -16,7 +16,18 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <!-- New form for logging in -->
+      </div>
+    </div>
+    <!-- 1E. DISPLAYING USERNAME WITH COOKIE-PARSER -->
+    <% if(username) { %>
+      <div>
+        <form class="form-inline justify-content-center" method="POST" action="/logout">
+          Logged in as: <%= username %>
+          <button type="submit" class="btn btn-danger btn-md">Logout</button>
+        </form>
+      
+      </div>
+      <% }else{ %>
         <form class="form-inline" action="/login" method="POST">
           <div class="form-group mb-2">
             <label for="username"></label>
@@ -30,8 +41,6 @@
           </div>
           <button type="submit" class="btn btn-primary">Login</button>
         </form>
-        <!-- form for logging in -->
-      </div>
-    </div>
+      <% } %>
   </nav>
 </header>
