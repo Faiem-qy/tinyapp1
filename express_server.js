@@ -173,8 +173,32 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
+  //5A. Handle Registration Errors
+  if (email === '' || password === '') { //If empty strings, send back a response with the 400 status code
+    return res.status(400).send("Error 400 - Please provide valid email and/or password"); 
+  } else if (getUserByEmail(email)) { //If registering with email already in the users obj-> 400 status code
+    return res.status(400).send("Error 400 - Email already exists");
+  } else {
+    users[id] = { id, email, password };
+    res.cookie('user_id', users[id].id);
+
+  }
+
   users[id] = { id, email, password };
   res.cookie('user_id', users[id].id);  //4B. After adding the user, set a user_id cookie containing  //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookiethe user's newly generated ID.
   console.log(users);
   res.redirect("/urls");
 });
+
+//5B. USER LOOKUP FUNCTION - Finding a user in the users object from its email
+const getUserByEmail = (email) => {
+  //loop through the object using a for of loop
+  for (const id in users) {
+    //if email is equal to req.body.email
+    if (users[id].email === email) {
+      return users[id]; //return either the entire user object or null if not found.
+    }
+  }
+  //else return null
+  return null;
+};
