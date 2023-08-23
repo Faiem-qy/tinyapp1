@@ -130,4 +130,10 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
+//2A. LOGOUT AND CLEAR COOKIES
+app.post("/logout", (req, res) => {
+  res.clearCookie('username');
+  res.redirect("/urls");
+});
+
 
