@@ -25,6 +25,20 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+//4A. REGISTERING NEW USERS
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
 // Route to redirect short URLs to their corresponding long URLs
 app.get("/u/:id", (req, res) => {
   // const longURL = ...
@@ -39,8 +53,10 @@ app.get("/u/:id", (req, res) => {
 
 // Route to render the form for creating new URLs
 app.get("/urls/new", (req, res) => {
-  const templateVars = { 
-    username: req.cookies["username"] //1C. DISPLAYING USERNAME WITH COOKIE-PARSER
+  const user_id = req.cookies.user_id;
+  const templateVars = {
+    user_id, //1C. DISPLAYING USERNAME WITH COOKIE-PARSER //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
+    user: users[user_id] //4D. Passing the user Object to the _header
   };
   res.render("urls_new", templateVars);
 });
@@ -48,20 +64,24 @@ app.get("/urls/new", (req, res) => {
 // Route to display a specific short URL's details
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
+  const user_id = req.cookies.user_id
   const longURL = urlDatabase[id];
-  const templateVars = { 
-    id, 
+  const templateVars = {
+    id,
     longURL,
-    username: req.cookies["username"] //1D. DISPLAYING USERNAME WITH COOKIE-PARSER
+    user: users[user_id], //4D. Passing the user Object to the _header
+    user_id //1D. DISPLAYING USERNAME WITH COOKIE-PARSER //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
   };
   res.render("urls_show", templateVars);
 });
 
 // Route to display a list of all short URLs
 app.get("/urls", (req, res) => {
-  const templateVars = { 
-    username: req.cookies["username"], //1B. DISPLAYING USERNAME WITH COOKIE-PARSER
-    urls: urlDatabase
+  const user_id = req.cookies.user_id
+  const templateVars = {
+    user_id, //1B. DISPLAYING USERNAME WITH COOKIE-PARSER //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
+    urls: urlDatabase,
+    user: users[user_id] //4D. Passing the user Object to the _header
   };
   res.render("urls_index", templateVars);
 });
@@ -89,9 +109,11 @@ app.get("/fetch", (req, res) => {
 
 //3A. USER REGISTRATION FORM
 app.get("/register", (req, res) => {
-  const templateVars = { 
-    username: req.cookies["username"], 
-    urls: urlDatabase
+  const user_id = req.cookies.user_id
+  const templateVars = {
+    user_id, //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
+    urls: urlDatabase,
+    user: users[user_id] //4D. Passing the user Object to the _header
   };
   res.render("registration", templateVars);
 });
@@ -134,15 +156,25 @@ app.post("/urls/:id", (req, res) => {
 
 //Cookie route
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie('username', username);
+  const user_id = req.cookies.user_id; //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
+  res.cookie('user_id', req.body.user_id); //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
   res.redirect("/urls");
 });
 
 //2A. LOGOUT AND CLEAR COOKIES
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id'); //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
   res.redirect("/urls");
 });
 
+//4B. REGISTERING NEW USERS
+app.post("/register", (req, res) => {
+  const id = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
 
+  users[id] = { id, email, password };
+  res.cookie('user_id', users[id].id);  //4B. After adding the user, set a user_id cookie containing  //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookiethe user's newly generated ID.
+  console.log(users);
+  res.redirect("/urls");
+});

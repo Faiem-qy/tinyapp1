@@ -20,10 +20,12 @@
     </div>
     <!-- 1E. DISPLAYING USERNAME WITH COOKIE-PARSER -->
     <!-- 2B. LOGOUT AND CLEAR COOKIES -->
-    <% if(username) { %>
+    <!-- 4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie -->
+    <!-- 4E. Update the _header partial to show the email property from the user object instead of the username. -->
+    <% if(user_id) { %> 
       <div>
         <form class="form-inline justify-content-center" method="POST" action="/logout">
-          Logged in as: <%= username %>
+          Logged in as: <%= user.email %>
           <button type="submit" class="btn btn-danger btn-md">Logout</button>
         </form>
       
@@ -31,12 +33,12 @@
       <% }else{ %>
         <form class="form-inline" action="/login" method="POST">
           <div class="form-group mb-2">
-            <label for="username"></label>
+            <label for="user_id"></label>
             <input
               type="text"
               class="form-control"
-              id="username"
-              name="username"
+              id="user_id"
+              name="user_id"
               placeholder="Enter your username"
             />
           </div>
