@@ -87,6 +87,15 @@ app.get("/fetch", (req, res) => {
   res.send(`a = ${a}`);
 });// crash
 
+//3A. USER REGISTRATION FORM
+app.get("/register", (req, res) => {
+  const templateVars = { 
+    username: req.cookies["username"], 
+    urls: urlDatabase
+  };
+  res.render("registration", templateVars);
+});
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
