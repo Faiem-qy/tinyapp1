@@ -25,6 +25,20 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+//4A. REGISTERING NEW USERS
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "123"
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "123",
+  },
+};
+
 // Route to redirect short URLs to their corresponding long URLs
 app.get("/u/:id", (req, res) => {
   // const longURL = ...
@@ -39,8 +53,10 @@ app.get("/u/:id", (req, res) => {
 
 // Route to render the form for creating new URLs
 app.get("/urls/new", (req, res) => {
-  const templateVars = { 
-    username: req.cookies["username"] //1C. DISPLAYING USERNAME WITH COOKIE-PARSER
+  const user_id = req.cookies.user_id;
+  const templateVars = {
+    user_id, //1C. DISPLAYING USERNAME WITH COOKIE-PARSER //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
+    user: users[user_id] //4D. Passing the user Object to the _header
   };
   res.render("urls_new", templateVars);
 });
@@ -48,20 +64,24 @@ app.get("/urls/new", (req, res) => {
 // Route to display a specific short URL's details
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
+  const user_id = req.cookies.user_id
   const longURL = urlDatabase[id];
-  const templateVars = { 
-    id, 
+  const templateVars = {
+    id,
     longURL,
-    username: req.cookies["username"] //1D. DISPLAYING USERNAME WITH COOKIE-PARSER
+    user: users[user_id], //4D. Passing the user Object to the _header
+    user_id //1D. DISPLAYING USERNAME WITH COOKIE-PARSER //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
   };
   res.render("urls_show", templateVars);
 });
 
 // Route to display a list of all short URLs
 app.get("/urls", (req, res) => {
-  const templateVars = { 
-    username: req.cookies["username"], //1B. DISPLAYING USERNAME WITH COOKIE-PARSER
-    urls: urlDatabase
+  const user_id = req.cookies.user_id
+  const templateVars = {
+    user_id, //1B. DISPLAYING USERNAME WITH COOKIE-PARSER //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
+    urls: urlDatabase,
+    user: users[user_id] //4D. Passing the user Object to the _header
   };
   res.render("urls_index", templateVars);
 });
@@ -87,8 +107,29 @@ app.get("/fetch", (req, res) => {
   res.send(`a = ${a}`);
 });// crash
 
+//3A. USER REGISTRATION FORM
+app.get("/register", (req, res) => {
+  const user_id = req.cookies.user_id
+  const templateVars = {
+    user_id, //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
+    urls: urlDatabase,
+    user: users[user_id] //4D. Passing the user Object to the _header
+  };
+  res.render("registration", templateVars);
+});
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
+});
+
+//6C . Add a GET route /login that renders the appropriate template
+app.get("/login", (req, res) => {
+  const user_id = req.cookies.user_id;
+  const templateVars = {
+    user_id, 
+    user: users[user_id]
+  };
+  res.render("login", templateVars); //renders login template and templateVars for _header.js to use
 });
 
 
@@ -122,18 +163,66 @@ app.post("/urls/:id", (req, res) => {
 });
 
 
-
-//Cookie route
+// //6A. Update Login Handler
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie('username', username);
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = getUserByEmail(email)
+  // console.log(user)
+
+  if (email === '' || password === '') { //If empty strings, send back a response with the 400 status code
+    return res.status(400).send("Error 400 -To Login Please provide valid email and/or password"); 
+
+  } else if (!user) { //If a user with that e-mail cannot be found, return a response with a 403 status code
+    return res.status(403).send("Error 403 -User/Email does not exist"); 
+
+  } else if (user.password !== password) { //If email exists, set cookie to the user_id
+    return res.status(403).send("Error 403 - Please check your login Information and try again"); 
+
+  } else {
+    res.cookie('user_id', user.id);
+
+  }
   res.redirect("/urls");
 });
 
 //2A. LOGOUT AND CLEAR COOKIES
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id'); //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
+  res.redirect("/login"); //6B. Update the /logout reroute to send the user to our /login page.
+});
+
+//4B. REGISTERING NEW USERS
+app.post("/register", (req, res) => {
+  const id = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+
+  //5A. Handle Registration Errors
+  if (email === '' || password === '') { //If empty strings, send back a response with the 400 status code
+    return res.status(400).send("Error 400 - Please provide valid email and/or password"); 
+  } else if (getUserByEmail(email)) { //If registering with email already in the users obj-> 400 status code
+    return res.status(400).send("Error 400 - Email already exists");
+  } else {
+    users[id] = { id, email, password };
+    res.cookie('user_id', users[id].id);
+
+  }
+  users[id] = { id, email, password };
+  res.cookie('user_id', users[id].id);  //4B. After adding the user, set a user_id cookie containing  //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookiethe user's newly generated ID.
+  console.log(users);
   res.redirect("/urls");
 });
 
-
+//5B. USER LOOKUP FUNCTION - Finding a user in the users object from its email
+const getUserByEmail = (email) => {
+  //loop through the object using a for of loop
+  for (const id in users) {
+    //if email is equal to req.body.email
+    if (users[id].email === email) {
+      return users[id]; //return either the entire user object or null if not found.
+    }
+  }
+  //else return null
+  return null;
+};
