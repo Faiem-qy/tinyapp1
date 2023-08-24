@@ -30,12 +30,12 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "123"
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: "123",
   },
 };
 
@@ -163,18 +163,33 @@ app.post("/urls/:id", (req, res) => {
 });
 
 
-
-//Cookie route
+// //6A. Update Login Handler
 app.post("/login", (req, res) => {
-  const user_id = req.cookies.user_id; //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
-  res.cookie('user_id', req.body.user_id); //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = getUserByEmail(email)
+  // console.log(user)
+
+  if (email === '' || password === '') { //If empty strings, send back a response with the 400 status code
+    return res.status(400).send("Error 400 -To Login Please provide valid email and/or password"); 
+
+  } else if (!user) { //If a user with that e-mail cannot be found, return a response with a 403 status code
+    return res.status(403).send("Error 403 -User/Email does not exist"); 
+
+  } else if (user.password !== password) { //If email exists, set cookie to the user_id
+    return res.status(403).send("Error 403 - Please check your login Information and try again"); 
+
+  } else {
+    res.cookie('user_id', user.id);
+
+  }
   res.redirect("/urls");
 });
 
 //2A. LOGOUT AND CLEAR COOKIES
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id'); //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
-  res.redirect("/urls");
+  res.redirect("/login"); //6B. Update the /logout reroute to send the user to our /login page.
 });
 
 //4B. REGISTERING NEW USERS
@@ -193,7 +208,6 @@ app.post("/register", (req, res) => {
     res.cookie('user_id', users[id].id);
 
   }
-
   users[id] = { id, email, password };
   res.cookie('user_id', users[id].id);  //4B. After adding the user, set a user_id cookie containing  //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookiethe user's newly generated ID.
   console.log(users);
