@@ -115,7 +115,11 @@ app.get("/register", (req, res) => {
     urls: urlDatabase,
     user: users[user_id] //4D. Passing the user Object to the _header
   };
-  res.render("registration", templateVars);
+  if(!user_id){
+    res.render("registration", templateVars);
+  }else{
+    res.redirect("/urls"); //If the user is logged in, GET /register should redirect to GET /urls
+  }
 });
 
 app.listen(PORT, () => {
@@ -129,7 +133,11 @@ app.get("/login", (req, res) => {
     user_id, 
     user: users[user_id]
   };
-  res.render("login", templateVars); //renders login template and templateVars for _header.js to use
+  if(!user_id){
+    res.render("login", templateVars);
+  }else{
+    res.redirect("/urls"); //If the user is logged in, GET /login should redirect to GET /urls
+  }
 });
 
 
@@ -172,16 +180,12 @@ app.post("/login", (req, res) => {
 
   if (email === '' || password === '') { //If empty strings, send back a response with the 400 status code
     return res.status(400).send("Error 400 -To Login Please provide valid email and/or password"); 
-
   } else if (!user) { //If a user with that e-mail cannot be found, return a response with a 403 status code
     return res.status(403).send("Error 403 -User/Email does not exist"); 
-
-  } else if (user.password !== password) { //If email exists, set cookie to the user_id
+  } else if (user.password !== password) {
     return res.status(403).send("Error 403 - Please check your login Information and try again"); 
-
-  } else {
+  } else { //If email exists, set cookie to the user_id
     res.cookie('user_id', user.id);
-
   }
   res.redirect("/urls");
 });
