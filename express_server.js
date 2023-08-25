@@ -46,7 +46,7 @@ const users = {
     id: "user2RandomID",
     email: "user2@example.com",
     password: "123",
-  },
+  }
 };
 
 // Route to redirect short URLs to their corresponding long URLs
@@ -83,14 +83,31 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const user_id = req.cookies.user_id;
-  const longURL = urlDatabase[id].longURL;
-  const templateVars = {
-    id,
-    longURL,
-    user: users[user_id], //4D. Passing the user Object to the _header
-    user_id //1D. DISPLAYING USERNAME WITH COOKIE-PARSER //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
-  };
-  res.render("urls_show", templateVars);
+  // const longURL = urlDatabase[id].longURL;
+  const urlsForUser = checkUserId(user_id);
+  if (!user_id) {//if user is not logged in, prompt login
+    res.send(`
+    <html>
+      <body>
+        <p>Please log in to continue updating URL's</p>
+        <form method="GET" action="/login">
+          <button type="submit" class="btn btn-primary btn-sm"> Log In </button>
+        </form>
+      </body>
+    </html>`);
+  } else if (!checkIdExists(id)) {//if this shortUrl does not exist prompt 
+    res.send("<html><body><p>URL does not exist</p></body></html>\n");
+  } else if (!urlsForUser[id]) {//check filtered obj for shortUrl that user is attempting to access
+    res.send("<html><body><p>You dont own this URL</p></body></html>\n");
+  } else {
+    const templateVars = {
+      id,
+      longURL: urlDatabase[id].longURL,
+      user: users[user_id], //4D. Passing the user Object to the _header
+      user_id //1D. DISPLAYING USERNAME WITH COOKIE-PARSER //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
+    };
+    res.render("urls_show", templateVars);
+  }
 });
 
 // Route to display a list of all short URLs
@@ -114,8 +131,8 @@ app.get("/urls", (req, res) => {
   } else {
 
     // res.redirect("/urls"); //If the user is logged in, GET /register should redirect to GET /urls
+    res.render("urls_index", templateVars);
   }
-  res.render("urls_index", templateVars);
 });
 
 app.get("/", (req, res) => {
@@ -184,17 +201,30 @@ app.post("/urls", (req, res) => {
     return res.send("You need to register to create URL's"); //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs
   } else {
     res.redirect("/urls"); //If the user is logged in, GET /register should redirect to GET /urls
-    res.send("Ok"); // Respond with 'Ok' (we will replace this)
   }
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  const idToDelete = req.params.id; // Get the ID to delete from the route parameter
-  if (urlDatabase[idToDelete]) {
-    delete urlDatabase[idToDelete]; // Remove the URL from the database
+  const id = req.params.id;
+  const user_id = req.cookies.user_id;
+  const urlsForUser = checkUserId(user_id);
+  if (!user_id) {// if user is not logged in then prompt the user to login
+    res.send(`
+    <html>
+      <body>
+        <p>Please log in to delete URL's</p>
+        <form method="GET" action="/login">
+          <button type="submit" class="btn btn-primary btn-sm"> Log In </button>
+        </form>
+      </body>
+    </html>`);
+  } else if (!checkIdExists(id)) {// if short URL does not exist then prompt
+    res.send("<html><body><p>URL does not exist</p></body></html>\n");
+  } else if (!urlsForUser[id]) {// if the user does not own the URL then prompt 
+    res.send("<html><body><p>You dont own this URL</p></body></html>\n");
+  } else if (urlDatabase[id]) {
+    delete urlDatabase[id]; // Remove the URL from the database
     res.redirect("/urls");// Redirect back to the index page
-  } else {
-    res.status(404).send("Short URL not found");
   }
 });
 
@@ -272,12 +302,20 @@ const getUserByEmail = (email) => {
 
 function checkUserId(id) {
   let confirmedId = {};
-  for (const shortUrl in urlDatabase)
+  for (const shortUrl in urlDatabase) {
     if (urlDatabase[shortUrl].userID === id) {// in the database, check if the userId in each obj matches the provided user_id/cookie of the logged in user.
       // if it does, take the shortURL(eg. b2xVn2) as the key and website as the value and add it to the object
       confirmedId[shortUrl] = urlDatabase[shortUrl].longURL;
     }
+  }
   return confirmedId;//eg result {b2xVn2: 'https://www.tsn.ca', b6UTxQ: 'https://www.f1.ca'}
 }
 
-
+function checkIdExists(id) {// make function to iterate over urlDatabase to check if shortUrl exist
+  for (const key in urlDatabase) {
+    if (key === id) {
+      return true;
+    }
+  }
+  return false;
+}
