@@ -44,9 +44,12 @@ app.get("/u/:id", (req, res) => {
   // const longURL = ...
   const id = req.params.id;
   const longURL = urlDatabase[id]; //Retrieve the longURL using the id from urlDatabase
+  
   if (longURL) {
+    console.log("true")
     res.redirect(longURL); //Redirect to the longURL
   } else {
+    console.log("false")
     res.status(404).send("Short URL not found");
   }
 });
@@ -58,8 +61,13 @@ app.get("/urls/new", (req, res) => {
     user_id, //1C. DISPLAYING USERNAME WITH COOKIE-PARSER //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
     user: users[user_id] //4D. Passing the user Object to the _header
   };
+  if(!user_id){
+    res.render("login", templateVars); //If the user is not logged in, redirect GET /urls/new to GET /login
+  }else{
   res.render("urls_new", templateVars);
+  }
 });
+//If the user is not logged in, redirect GET /urls/new to GET /login
 
 // Route to display a specific short URL's details
 app.get("/urls/:id", (req, res) => {
@@ -148,7 +156,12 @@ app.post("/urls", (req, res) => {
   urlDatabase[id] = longURL;// add random id to the new longUrl
   console.log(urlDatabase);
 
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  if(!user_id){
+    return res.send("You need to register to create URL's"); //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs
+  }else{
+    res.redirect("/urls"); //If the user is logged in, GET /register should redirect to GET /urls
+    res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  }
 });
 
 app.post("/urls/:id/delete", (req, res) => {
