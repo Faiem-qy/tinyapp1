@@ -21,8 +21,18 @@ app.use(cookieParser());
 
 // Define the initial database of shortened URLs
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b2xVn2: {
+    longURL: "https://www.tsn.ca",
+    userID: "user2RandomID",
+  },
+  b6UTxQ: {
+    longURL: "https://www.f1.ca",
+    userID: "user2RandomID",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "userRandomID",
+  },
 };
 
 //4A. REGISTERING NEW USERS
@@ -43,13 +53,13 @@ const users = {
 app.get("/u/:id", (req, res) => {
   // const longURL = ...
   const id = req.params.id;
-  const longURL = urlDatabase[id]; //Retrieve the longURL using the id from urlDatabase
-  
+  const longURL = urlDatabase[id].longURL; //Retrieve the longURL using the id from urlDatabase
+
   if (longURL) {
-    console.log("true")
+    console.log("true");
     res.redirect(longURL); //Redirect to the longURL
   } else {
-    console.log("false")
+    console.log("false");
     res.status(404).send("Short URL not found");
   }
 });
@@ -61,10 +71,10 @@ app.get("/urls/new", (req, res) => {
     user_id, //1C. DISPLAYING USERNAME WITH COOKIE-PARSER //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
     user: users[user_id] //4D. Passing the user Object to the _header
   };
-  if(!user_id){
+  if (!user_id) {
     res.render("login", templateVars); //If the user is not logged in, redirect GET /urls/new to GET /login
-  }else{
-  res.render("urls_new", templateVars);
+  } else {
+    res.render("urls_new", templateVars);
   }
 });
 //If the user is not logged in, redirect GET /urls/new to GET /login
@@ -72,8 +82,8 @@ app.get("/urls/new", (req, res) => {
 // Route to display a specific short URL's details
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
-  const user_id = req.cookies.user_id
-  const longURL = urlDatabase[id];
+  const user_id = req.cookies.user_id;
+  const longURL = urlDatabase[id].longURL;
   const templateVars = {
     id,
     longURL,
@@ -85,12 +95,26 @@ app.get("/urls/:id", (req, res) => {
 
 // Route to display a list of all short URLs
 app.get("/urls", (req, res) => {
-  const user_id = req.cookies.user_id
+  const user_id = req.cookies.user_id;
   const templateVars = {
     user_id, //1B. DISPLAYING USERNAME WITH COOKIE-PARSER //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
-    urls: urlDatabase,
+    urls: checkUserId(user_id),//compare cookie to user
     user: users[user_id] //4D. Passing the user Object to the _header
   };
+  if (!user_id) {
+    res.send(`
+    <html>
+      <body>
+        <p>Please log in to continue</p>
+        <form method="GET" action="/login">
+          <button type="submit" class="btn btn-primary btn-sm"> Log In </button>
+        </form>
+      </body>
+    </html>`);
+  } else {
+
+    // res.redirect("/urls"); //If the user is logged in, GET /register should redirect to GET /urls
+  }
   res.render("urls_index", templateVars);
 });
 
@@ -117,15 +141,15 @@ app.get("/fetch", (req, res) => {
 
 //3A. USER REGISTRATION FORM
 app.get("/register", (req, res) => {
-  const user_id = req.cookies.user_id
+  const user_id = req.cookies.user_id;
   const templateVars = {
     user_id, //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
     urls: urlDatabase,
     user: users[user_id] //4D. Passing the user Object to the _header
   };
-  if(!user_id){
+  if (!user_id) {
     res.render("registration", templateVars);
-  }else{
+  } else {
     res.redirect("/urls"); //If the user is logged in, GET /register should redirect to GET /urls
   }
 });
@@ -138,12 +162,12 @@ app.listen(PORT, () => {
 app.get("/login", (req, res) => {
   const user_id = req.cookies.user_id;
   const templateVars = {
-    user_id, 
+    user_id,
     user: users[user_id]
   };
-  if(!user_id){
+  if (!user_id) {
     res.render("login", templateVars);
-  }else{
+  } else {
     res.redirect("/urls"); //If the user is logged in, GET /login should redirect to GET /urls
   }
 });
@@ -153,12 +177,12 @@ app.post("/urls", (req, res) => {
   const id = generateRandomString();// generate random string
   const longURL = req.body.longURL;//
   console.log(id, longURL); // Log the POST request body to the console
-  urlDatabase[id] = longURL;// add random id to the new longUrl
+  urlDatabase[id].longURL = longURL;// add random id to the new longUrl
   console.log(urlDatabase);
 
-  if(!user_id){
+  if (!user_id) {
     return res.send("You need to register to create URL's"); //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs
-  }else{
+  } else {
     res.redirect("/urls"); //If the user is logged in, GET /register should redirect to GET /urls
     res.send("Ok"); // Respond with 'Ok' (we will replace this)
   }
@@ -179,7 +203,7 @@ app.post("/urls/:id", (req, res) => {
   const id = req.params.id; // Get the ID
   const longURL = req.body.longURL;
 
-  urlDatabase[id] = longURL;  //The id is assigned a new value. This id is now equal to this new req.body submitted by the user (old one is discarded)
+  urlDatabase[id].longURL = longURL;  //The id is assigned a new value. This id is now equal to this new req.body submitted by the user (old one is discarded)
   res.redirect("/urls");
 });
 
@@ -188,15 +212,15 @@ app.post("/urls/:id", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = getUserByEmail(email)
+  const user = getUserByEmail(email);
   // console.log(user)
 
   if (email === '' || password === '') { //If empty strings, send back a response with the 400 status code
-    return res.status(400).send("Error 400 -To Login Please provide valid email and/or password"); 
+    return res.status(400).send("Error 400 -To Login Please provide valid email and/or password");
   } else if (!user) { //If a user with that e-mail cannot be found, return a response with a 403 status code
-    return res.status(403).send("Error 403 -User/Email does not exist"); 
+    return res.status(403).send("Error 403 -User/Email does not exist");
   } else if (user.password !== password) {
-    return res.status(403).send("Error 403 - Please check your login Information and try again"); 
+    return res.status(403).send("Error 403 - Please check your login Information and try again");
   } else { //If email exists, set cookie to the user_id
     res.cookie('user_id', user.id);
   }
@@ -217,7 +241,7 @@ app.post("/register", (req, res) => {
 
   //5A. Handle Registration Errors
   if (email === '' || password === '') { //If empty strings, send back a response with the 400 status code
-    return res.status(400).send("Error 400 - Please provide valid email and/or password"); 
+    return res.status(400).send("Error 400 - Please provide valid email and/or password");
   } else if (getUserByEmail(email)) { //If registering with email already in the users obj-> 400 status code
     return res.status(400).send("Error 400 - Email already exists");
   } else {
@@ -243,3 +267,17 @@ const getUserByEmail = (email) => {
   //else return null
   return null;
 };
+
+//make a function to check if the user id, which is in a nested object, if the user is the same then show the shortURLs
+
+function checkUserId(id) {
+  let confirmedId = {};
+  for (const shortUrl in urlDatabase)
+    if (urlDatabase[shortUrl].userID === id) {// in the database, check if the userId in each obj matches the provided user_id/cookie of the logged in user.
+      // if it does, take the shortURL(eg. b2xVn2) as the key and website as the value and add it to the object
+      confirmedId[shortUrl] = urlDatabase[shortUrl].longURL;
+    }
+  return confirmedId;//eg result {b2xVn2: 'https://www.tsn.ca', b6UTxQ: 'https://www.f1.ca'}
+}
+
+
