@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs")
 
 function generateRandomString() {
   const alphanumeric = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -40,12 +41,12 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "123"
+    password: bcrypt.hashSync("123", 10)// edit to use the bcrypt feature to hash the stored password
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "123",
+    password: bcrypt.hashSync("123", 10)
   }
 };
 
@@ -241,15 +242,15 @@ app.post("/urls/:id", (req, res) => {
 // //6A. Update Login Handler
 app.post("/login", (req, res) => {
   const email = req.body.email;
-  const password = req.body.password;
-  const user = getUserByEmail(email);
-  // console.log(user)
+  const password = bcrypt.hashSync(req.body.password, 10);//the user enters this password when logging in which is hashed 
+  const user = getUserByEmail(email);// this uses the email provided to filter through the users obj and return the specific user
+  console.log(user)
 
   if (email === '' || password === '') { //If empty strings, send back a response with the 400 status code
     return res.status(400).send("Error 400 -To Login Please provide valid email and/or password");
   } else if (!user) { //If a user with that e-mail cannot be found, return a response with a 403 status code
     return res.status(403).send("Error 403 -User/Email does not exist");
-  } else if (user.password !== password) {
+  } else if (bcrypt.compareSync(password, user.password)) {// this compres the password provided by the user to the stored password in the users object
     return res.status(403).send("Error 403 - Please check your login Information and try again");
   } else { //If email exists, set cookie to the user_id
     res.cookie('user_id', user.id);
@@ -267,7 +268,7 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
-  const password = req.body.password;
+  const password = bcrypt.hashSync(req.body.password, 10);
 
   //5A. Handle Registration Errors
   if (email === '' || password === '') { //If empty strings, send back a response with the 400 status code
