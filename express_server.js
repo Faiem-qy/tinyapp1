@@ -1,17 +1,10 @@
+const{generateRandomString, checkIdExists, checkUserId, getUserByEmail} = require('./helpers')
+
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
 const bcrypt = require("bcryptjs")
-
-function generateRandomString() {
-  const alphanumeric = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < 6; i++) {
-    result += alphanumeric.charAt(Math.floor(Math.random() * alphanumeric.length));
-  }
-  return result;
-}
 
 app.set("view engine", "ejs");
 
@@ -85,7 +78,7 @@ app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const user_id = req.cookies.user_id;
   // const longURL = urlDatabase[id].longURL;
-  const urlsForUser = checkUserId(user_id);
+  const urlsForUser = checkUserId(user_id, urlDatabase);
   if (!user_id) {//if user is not logged in, prompt login
     res.send(`
     <html>
@@ -96,7 +89,7 @@ app.get("/urls/:id", (req, res) => {
         </form>
       </body>
     </html>`);
-  } else if (!checkIdExists(id)) {//if this shortUrl does not exist prompt 
+  } else if (!checkIdExists(id, urlDatabase)) {//if this shortUrl does not exist prompt 
     res.send("<html><body><p>URL does not exist</p></body></html>\n");
   } else if (!urlsForUser[id]) {//check filtered obj for shortUrl that user is attempting to access
     res.send("<html><body><p>You dont own this URL</p></body></html>\n");
@@ -116,7 +109,7 @@ app.get("/urls", (req, res) => {
   const user_id = req.cookies.user_id;
   const templateVars = {
     user_id, //1B. DISPLAYING USERNAME WITH COOKIE-PARSER //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookie
-    urls: checkUserId(user_id),//compare cookie to user
+    urls: checkUserId(user_id, urlDatabase),//compare cookie to user
     user: users[user_id] //4D. Passing the user Object to the _header
   };
   if (!user_id) {
@@ -194,6 +187,7 @@ app.get("/login", (req, res) => {
 app.post("/urls", (req, res) => {
   const id = generateRandomString();// generate random string
   const longURL = req.body.longURL;//
+  const user_id = req.cookies.user_id;
   console.log(id, longURL); // Log the POST request body to the console
   urlDatabase[id].longURL = longURL;// add random id to the new longUrl
   console.log(urlDatabase);
@@ -208,7 +202,7 @@ app.post("/urls", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
   const user_id = req.cookies.user_id;
-  const urlsForUser = checkUserId(user_id);
+  const urlsForUser = checkUserId(user_id,urlDatabase);
   if (!user_id) {// if user is not logged in then prompt the user to login
     res.send(`
     <html>
@@ -219,7 +213,7 @@ app.post("/urls/:id/delete", (req, res) => {
         </form>
       </body>
     </html>`);
-  } else if (!checkIdExists(id)) {// if short URL does not exist then prompt
+  } else if (!checkIdExists(id, urlDatabase)) {// if short URL does not exist then prompt
     res.send("<html><body><p>URL does not exist</p></body></html>\n");
   } else if (!urlsForUser[id]) {// if the user does not own the URL then prompt 
     res.send("<html><body><p>You dont own this URL</p></body></html>\n");
@@ -243,7 +237,7 @@ app.post("/urls/:id", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = bcrypt.hashSync(req.body.password, 10);//the user enters this password when logging in which is hashed 
-  const user = getUserByEmail(email);// this uses the email provided to filter through the users obj and return the specific user
+  const user = getUserByEmail(email, users);// this uses the email provided to filter through the users obj and return the specific user
   console.log(user)
 
   if (email === '' || password === '') { //If empty strings, send back a response with the 400 status code
@@ -273,7 +267,7 @@ app.post("/register", (req, res) => {
   //5A. Handle Registration Errors
   if (email === '' || password === '') { //If empty strings, send back a response with the 400 status code
     return res.status(400).send("Error 400 - Please provide valid email and/or password");
-  } else if (getUserByEmail(email)) { //If registering with email already in the users obj-> 400 status code
+  } else if (getUserByEmail(email, users)) { //If registering with email already in the users obj-> 400 status code
     return res.status(400).send("Error 400 - Email already exists");
   } else {
     users[id] = { id, email, password };
@@ -286,37 +280,3 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
-//5B. USER LOOKUP FUNCTION - Finding a user in the users object from its email
-const getUserByEmail = (email) => {
-  //loop through the object using a for of loop
-  for (const id in users) {
-    //if email is equal to req.body.email
-    if (users[id].email === email) {
-      return users[id]; //return either the entire user object or null if not found.
-    }
-  }
-  //else return null
-  return null;
-};
-
-//make a function to check if the user id, which is in a nested object, if the user is the same then show the shortURLs
-
-function checkUserId(id) {
-  let confirmedId = {};
-  for (const shortUrl in urlDatabase) {
-    if (urlDatabase[shortUrl].userID === id) {// in the database, check if the userId in each obj matches the provided user_id/cookie of the logged in user.
-      // if it does, take the shortURL(eg. b2xVn2) as the key and website as the value and add it to the object
-      confirmedId[shortUrl] = urlDatabase[shortUrl].longURL;
-    }
-  }
-  return confirmedId;//eg result {b2xVn2: 'https://www.tsn.ca', b6UTxQ: 'https://www.f1.ca'}
-}
-
-function checkIdExists(id) {// make function to iterate over urlDatabase to check if shortUrl exist
-  for (const key in urlDatabase) {
-    if (key === id) {
-      return true;
-    }
-  }
-  return false;
-}
