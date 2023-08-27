@@ -58,10 +58,8 @@ app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[id].longURL; //Retrieve the longURL using the id from urlDatabase
 
   if (longURL) {
-    console.log("true");
     res.redirect(longURL); //Redirect to the longURL
   } else {
-    console.log("false");
     res.status(404).send("Short URL not found");
   }
 });
@@ -196,9 +194,7 @@ app.post("/urls", (req, res) => {
   const id = generateRandomString();// generate random string
   const longURL = req.body.longURL;//
   const user_id = req.session.user_id;
-  console.log(id, longURL, urlDatabase[id]); // Log the POST request body to the console
   urlDatabase[id] = { "longURL": longURL, "userID": user_id };
-  console.log(urlDatabase);
   
   if (!user_id) {
     return res.send("You need to register to create URL's"); //If the user is not logged in, POST /urls should respond with an HTML message that tells the user why they cannot shorten URLs
@@ -246,7 +242,6 @@ app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = bcrypt.hashSync(req.body.password, 10);//the user enters this password when logging in which is hashed 
   const user = getUserByEmail(email, users);// this uses the email provided to filter through the users obj and return the specific user
-  console.log(user);
 
   if (email === '' || password === '') { //If empty strings, send back a response with the 400 status code
     return res.status(400).send("Error 400 -To Login Please provide valid email and/or password");
@@ -281,9 +276,7 @@ app.post("/register", (req, res) => {
     users[id] = { id, email, password };
     req.session.user_id = users[id].id;
   }
-  // users[id] = { id, email, password };
-  // req.session.user_id = users[id].id;  //4B. After adding the user, set a user_id cookie containing  //4C. we're no longer going to set a username cookie; instead, we will set only a user_id cookiethe user's newly generated ID.
-  console.log(users);
+
   res.redirect("/urls");
 });
 

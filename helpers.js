@@ -18,7 +18,7 @@ function getUserByEmail(email, users){
     }
   }
   //else return null
-  return null;
+  return undefined;
 };
 
 //make a function to check if the user id, which is in a nested object, if the user is the same then show the shortURLs
