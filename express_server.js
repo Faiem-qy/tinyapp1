@@ -53,14 +53,13 @@ const users = {
 
 // Route to redirect short URLs to their corresponding long URLs
 app.get("/u/:id", (req, res) => {
-  // const longURL = ...
   const id = req.params.id;
-  const longURL = urlDatabase[id].longURL; //Retrieve the longURL using the id from urlDatabase
 
-  if (longURL) {
-    res.redirect(longURL); //Redirect to the longURL
-  } else {
+  if (!urlDatabase[id]) {
     res.status(404).send("Short URL not found");
+  } else {
+    const longURL = urlDatabase[id].longURL;
+    res.redirect(longURL); //Redirect to the longURL
   }
 });
 
@@ -136,7 +135,16 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  const user_id = req.session.user_id;
+  const templateVars = {
+    user_id,
+    user: users[user_id]
+  };
+  if (!user_id) {
+    res.render("login", templateVars);
+  } else {
+    res.redirect("/urls"); 
+  }
 });
 
 app.get("/urls.json", (req, res) => {
